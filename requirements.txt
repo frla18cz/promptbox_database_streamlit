@@ -1,0 +1,4 @@
+streamlit
+pymysql
+toml
+beautifulsoup4
