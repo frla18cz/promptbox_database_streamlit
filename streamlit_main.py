@@ -53,6 +53,7 @@ df = pd.read_sql(query, conn)
 # Close the connection
 conn.close()
 
+# Display the data
 # Print results with expanders for additional details
 for row in df.itertuples():
     with st.expander(f"**{row.prompt_name}**"):
