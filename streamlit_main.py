@@ -22,6 +22,11 @@ st.markdown("""
         padding: 10px;
         margin-bottom: 10px;
     }
+    .expander-title {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -51,7 +56,7 @@ followup_prompt_exists = 'followup_prompt' in columns
 # Construct the query dynamically based on the existence of columns
 select_fields = '''
     p.id AS prompt_id, p.name AS prompt_name, p.description, p.prompt, p.instructions, p.price,
-    c.name AS category_name, GROUP_CONCAT(t.name) AS tags
+    c.name AS category_name, GROUP_CONCAT(t.name) AS tags, p.prompt_version
 '''
 
 if example_output_exists:
@@ -66,7 +71,7 @@ query = f'''
     JOIN promptbox_categories c ON p.category_id = c.id
     LEFT JOIN promptbox_prompts_tags pt ON p.id = pt.prompt_id
     LEFT JOIN promptbox_tags t ON pt.tag_id = t.id
-    GROUP BY p.id, p.name, p.description, p.prompt, p.instructions, p.price, c.name
+    GROUP BY p.id, p.name, p.description, p.prompt, p.instructions, p.price, c.name, p.prompt_version
 '''
 
 if example_output_exists:
@@ -74,6 +79,9 @@ if example_output_exists:
 
 if followup_prompt_exists:
     query += ', p.followup_prompt'
+
+# Add ORDER BY clause to sort by id in descending order
+query += ' ORDER BY p.id DESC'
 
 df = pd.read_sql(query, conn)
 
@@ -83,6 +91,12 @@ conn.close()
 # Display the data with improved styling
 for row in df.itertuples():
     with st.expander(f"**{row.prompt_name}**"):
+        st.markdown(f"<div class='expander-title'>{row.prompt_name}</div>", unsafe_allow_html=True)
+
+        st.markdown(f"<div class='section-header'>Prompt Version</div>", unsafe_allow_html=True)
+        st.write(row.prompt_version)
+
+        st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
         st.markdown(f"<div class='section-header'>Description</div>", unsafe_allow_html=True)
         st.write(row.description)
 
