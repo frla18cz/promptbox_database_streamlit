@@ -1,8 +1,10 @@
 import streamlit as st
 import pymysql
 import pandas as pd
+import html
+import re
 
-# Custom CSS for better styling
+# Custom CSS for better styling (unchanged)
 st.markdown("""
 <style>
     .section-divider {
@@ -27,6 +29,9 @@ st.markdown("""
         font-weight: bold;
         margin-bottom: 20px;
     }
+    .bold {
+        font-weight: bold;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -44,90 +49,103 @@ conn = pymysql.connect(
     database=db_config["database"]
 )
 
-# Query to describe the structure of promptbox_prompts
-query_describe = "DESCRIBE promptbox_prompts;"
-describe_df = pd.read_sql(query_describe, conn)
-
-# Check if columns exist
-columns = describe_df['Field'].tolist()
-example_output_exists = 'example_output' in columns
-followup_prompt_exists = 'followup_prompt' in columns
-
-# Construct the query dynamically based on the existence of columns
-select_fields = '''
-    p.id AS prompt_id, p.name AS prompt_name, p.description, p.prompt, p.instructions, p.price,
-    c.name AS category_name, GROUP_CONCAT(t.name) AS tags, p.prompt_version
-'''
-
-if example_output_exists:
-    select_fields += ', p.example_output'
-
-if followup_prompt_exists:
-    select_fields += ', p.followup_prompt'
-
-query = f'''
-    SELECT {select_fields}
+# Updated query (unchanged)
+query = '''
+    SELECT 
+        p.id AS prompt_id, p.name AS prompt_name, p.description, p.prompt, 
+        p.instructions, p.price, p.example_output, p.followup_prompt,
+        c.name AS category_name, 
+        GROUP_CONCAT(DISTINCT sc.name SEPARATOR ', ') AS subcategories,
+        GROUP_CONCAT(DISTINCT t.name SEPARATOR ', ') AS tags, 
+        p.prompt_version
     FROM promptbox_prompts p
     JOIN promptbox_categories c ON p.category_id = c.id
+    LEFT JOIN promptbox_prompts_sub_categories psc ON p.id = psc.prompt_id
+    LEFT JOIN promptbox_subcategories sc ON psc.subcategory_id = sc.id
     LEFT JOIN promptbox_prompts_tags pt ON p.id = pt.prompt_id
     LEFT JOIN promptbox_tags t ON pt.tag_id = t.id
-    GROUP BY p.id, p.name, p.description, p.prompt, p.instructions, p.price, c.name, p.prompt_version
+    GROUP BY p.id, p.name, p.description, p.prompt, p.instructions, p.price, 
+             c.name, p.prompt_version, p.example_output, p.followup_prompt
+    ORDER BY p.id DESC
 '''
-
-if example_output_exists:
-    query += ', p.example_output'
-
-if followup_prompt_exists:
-    query += ', p.followup_prompt'
-
-# Add ORDER BY clause to sort by id in descending order
-query += ' ORDER BY p.id DESC'
 
 df = pd.read_sql(query, conn)
 
 # Close the connection
 conn.close()
 
+
+def decode_text(text):
+    if not isinstance(text, str):
+        return text
+
+    # Decode HTML entities
+    text = html.unescape(text)
+
+    # Replace escape sequences
+    text = text.replace('\\n', '\n').replace('\\r', '\r').replace('\\t', '\t')
+
+    # Replace Unicode escape sequences
+    text = re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), text)
+
+    # Remove any remaining backslashes
+    text = text.replace('\\', '')
+
+    return text
+
+
 # Display the data with improved styling
 for row in df.itertuples():
-    with st.expander(f"**{row.prompt_name}**"):
-        st.markdown(f"<div class='expander-title'>{row.prompt_name}</div>", unsafe_allow_html=True)
+    with st.expander(f"**{decode_text(row.prompt_name)}**"):
+        st.markdown(f"<div class='expander-title'>{decode_text(row.prompt_name)}</div>", unsafe_allow_html=True)
 
         st.markdown(f"<div class='section-header'>Prompt Version</div>", unsafe_allow_html=True)
         st.write(row.prompt_version)
 
         st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
         st.markdown(f"<div class='section-header'>Description</div>", unsafe_allow_html=True)
-        st.write(row.description)
+        st.markdown(decode_text(row.description), unsafe_allow_html=True)
 
         st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
         st.markdown(f"<div class='section-header'>Prompt</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='prompt-content'>{row.prompt}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='prompt-content'>{decode_text(row.prompt)}</div>", unsafe_allow_html=True)
 
-        if example_output_exists and hasattr(row, 'example_output') and row.example_output:
+        if row.example_output:
             st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='section-header'>Example Output</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='prompt-content'>{row.example_output}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='section-header'>Example Outputs</div>", unsafe_allow_html=True)
+            examples = decode_text(row.example_output).split(';;')
+            for i, example in enumerate(examples, 1):
+                st.markdown(f"<div class='prompt-content'><strong>Example {i}:</strong><br>{example.strip()}</div>",
+                            unsafe_allow_html=True)
+                if i < len(examples):  # Add a small divider between examples, but not after the last one
+                    st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
 
-        if followup_prompt_exists and hasattr(row, 'followup_prompt') and row.followup_prompt:
+        if row.followup_prompt:
             st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
             st.markdown(f"<div class='section-header'>Follow-up Prompts</div>", unsafe_allow_html=True)
-            followups = row.followup_prompt.split(';;')
+            followups = decode_text(row.followup_prompt).split(';;')
             for i, followup in enumerate(followups, 1):
                 st.markdown(f"<div class='prompt-content'>{i}. {followup.strip()}</div>", unsafe_allow_html=True)
 
         if row.instructions:
             st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
             st.markdown(f"<div class='section-header'>Instructions</div>", unsafe_allow_html=True)
-            st.write(row.instructions)
+            # Odrážky formátované správně s HTML <ul> a <li>
+            instructions = decode_text(row.instructions).splitlines()
+            st.markdown("<ul>" + "".join(f"<li>{line}</li>" for line in instructions if line.strip()) + "</ul>", unsafe_allow_html=True)
 
         st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
         st.markdown(f"<div class='section-header'>Category</div>", unsafe_allow_html=True)
-        st.write(row.category_name)
+        st.write(decode_text(row.category_name))
+
+        if row.subcategories:
+            st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='section-header'>Subcategories</div>", unsafe_allow_html=True)
+            st.write(decode_text(row.subcategories))
 
         st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
         st.markdown(f"<div class='section-header'>Tags</div>", unsafe_allow_html=True)
-        st.write(row.tags)
+        st.write(decode_text(row.tags))
 
         st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
         st.markdown(f"<div class='section-header'>Price</div>", unsafe_allow_html=True)
