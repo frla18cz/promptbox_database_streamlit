@@ -37,10 +37,8 @@ st.markdown("""
 
 st.title('Prompt Box - ukázka promptů!')
 
-# Read database connection configuration from secrets
+# Database connection and query execution (unchanged)
 db_config = st.secrets["mysql"]
-
-# Initialize connection
 conn = pymysql.connect(
     host=db_config["host"],
     port=db_config["port"],
@@ -49,7 +47,6 @@ conn = pymysql.connect(
     database=db_config["database"]
 )
 
-# Updated query (unchanged)
 query = '''
     SELECT 
         p.id AS prompt_id, p.name AS prompt_name, p.description, p.prompt, 
@@ -70,31 +67,19 @@ query = '''
 '''
 
 df = pd.read_sql(query, conn)
-
-# Close the connection
 conn.close()
 
-
+# Helper function (unchanged)
 def decode_text(text):
     if not isinstance(text, str):
         return text
-
-    # Decode HTML entities
     text = html.unescape(text)
-
-    # Replace escape sequences
     text = text.replace('\\n', '\n').replace('\\r', '\r').replace('\\t', '\t')
-
-    # Replace Unicode escape sequences
     text = re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), text)
-
-    # Remove any remaining backslashes
     text = text.replace('\\', '')
-
     return text
 
-
-# Display the data with improved styling
+# Display the data with improved styling and reordered sections
 for row in df.itertuples():
     with st.expander(f"**{decode_text(row.prompt_name)}**"):
         st.markdown(f"<div class='expander-title'>{decode_text(row.prompt_name)}</div>", unsafe_allow_html=True)
@@ -110,16 +95,6 @@ for row in df.itertuples():
         st.markdown(f"<div class='section-header'>Prompt</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='prompt-content'>{decode_text(row.prompt)}</div>", unsafe_allow_html=True)
 
-        if row.example_output:
-            st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='section-header'>Example Outputs</div>", unsafe_allow_html=True)
-            examples = decode_text(row.example_output).split(';;')
-            for i, example in enumerate(examples, 1):
-                st.markdown(f"<div class='prompt-content'><strong>Example {i}:</strong><br>{example.strip()}</div>",
-                            unsafe_allow_html=True)
-                if i < len(examples):  # Add a small divider between examples, but not after the last one
-                    st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
-
         if row.followup_prompt:
             st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
             st.markdown(f"<div class='section-header'>Follow-up Prompts</div>", unsafe_allow_html=True)
@@ -130,7 +105,6 @@ for row in df.itertuples():
         if row.instructions:
             st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
             st.markdown(f"<div class='section-header'>Instructions</div>", unsafe_allow_html=True)
-            # Odrážky formátované správně s HTML <ul> a <li>
             instructions = decode_text(row.instructions).splitlines()
             st.markdown("<ul>" + "".join(f"<li>{line}</li>" for line in instructions if line.strip()) + "</ul>", unsafe_allow_html=True)
 
@@ -150,3 +124,15 @@ for row in df.itertuples():
         st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
         st.markdown(f"<div class='section-header'>Price</div>", unsafe_allow_html=True)
         st.write("Zdarma" if row.price == 0 else f"{row.price}")
+
+        # Example Outputs moved to the end
+        if row.example_output:
+            st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='section-header'>Example Outputs</div>", unsafe_allow_html=True)
+            examples = decode_text(row.example_output).split(';;')
+            for i, example in enumerate(examples, 1):
+                formatted_example = example.strip().replace('\n', '<br>')
+                st.markdown(f"<div class='prompt-content'><strong>Example {i}:</strong><br>{formatted_example}</div>",
+                            unsafe_allow_html=True)
+                if i < len(examples):
+                    st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
