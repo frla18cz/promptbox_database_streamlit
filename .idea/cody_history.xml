@@ -13,8 +13,184 @@
               <chat>
                 <internalId value="87bc1ffa-9d6c-419a-9a45-06d6b2e590fc" />
               </chat>
+              <chat>
+                <internalId value="6808056d-b9f2-4d44-9dd5-250393ca9675" />
+              </chat>
+              <chat>
+                <internalId value="81e4dbdf-f159-47b1-b6d8-c364a6ce37e5" />
+              </chat>
+              <chat>
+                <internalId value="23e600ff-10b1-4796-8a40-95bd412eea4e" />
+              </chat>
+              <chat>
+                <internalId value="1e215044-c0d7-406e-8074-8cf42ec9a273" />
+              </chat>
+              <chat>
+                <internalId value="77281e50-8708-48fb-9210-9dcc16b09e72" />
+              </chat>
+              <chat>
+                <internalId value="8f114ac0-d93d-4ba5-bf7e-8ecfb864e073" />
+              </chat>
+              <chat>
+                <internalId value="2047e926-856a-4c04-ae3f-78c587e32870" />
+                <llm>
+                  <llm>
+                    <model value="ollama/deepseek-coder-v2:latest" />
+                    <provider value="Ollama" />
+                    <tags>
+                      <list>
+                        <option value="local" />
+                        <option value="ollama" />
+                        <option value="experimental" />
+                      </list>
+                    </tags>
+                    <title value="deepseek coder v2:latest" />
+                    <usage>
+                      <list>
+                        <option value="chat" />
+                        <option value="edit" />
+                      </list>
+                    </usage>
+                  </llm>
+                </llm>
+              </chat>
+              <chat>
+                <internalId value="f070a426-b517-45cf-9623-f3745070434f" />
+                <llm>
+                  <llm>
+                    <model value="ollama/deepseek-coder-v2:latest" />
+                    <provider value="Ollama" />
+                    <tags>
+                      <list>
+                        <option value="local" />
+                        <option value="ollama" />
+                        <option value="experimental" />
+                      </list>
+                    </tags>
+                    <title value="deepseek coder v2:latest" />
+                    <usage>
+                      <list>
+                        <option value="chat" />
+                        <option value="edit" />
+                      </list>
+                    </usage>
+                  </llm>
+                </llm>
+              </chat>
+              <chat>
+                <internalId value="abe7552a-d7da-48db-8bf3-157c8fba34bf" />
+                <llm>
+                  <llm>
+                    <model value="ollama/deepseek-coder-v2:latest" />
+                    <provider value="Ollama" />
+                    <tags>
+                      <list>
+                        <option value="local" />
+                        <option value="ollama" />
+                        <option value="experimental" />
+                      </list>
+                    </tags>
+                    <title value="deepseek coder v2:latest" />
+                    <usage>
+                      <list>
+                        <option value="chat" />
+                        <option value="edit" />
+                      </list>
+                    </usage>
+                  </llm>
+                </llm>
+              </chat>
+              <chat>
+                <internalId value="220b5871-c58a-4e28-bd75-bba98a1a5fa0" />
+                <llm>
+                  <llm>
+                    <model value="ollama/deepseek-coder-v2:latest" />
+                    <provider value="Ollama" />
+                    <tags>
+                      <list>
+                        <option value="local" />
+                        <option value="ollama" />
+                        <option value="experimental" />
+                      </list>
+                    </tags>
+                    <title value="deepseek coder v2:latest" />
+                    <usage>
+                      <list>
+                        <option value="chat" />
+                        <option value="edit" />
+                      </list>
+                    </usage>
+                  </llm>
+                </llm>
+              </chat>
+              <chat>
+                <internalId value="f2a1a6b6-4f43-43ab-8334-05f8599dffe7" />
+                <llm>
+                  <llm>
+                    <model value="ollama/deepseek-coder-v2:latest" />
+                    <provider value="Ollama" />
+                    <tags>
+                      <list>
+                        <option value="local" />
+                        <option value="ollama" />
+                        <option value="experimental" />
+                      </list>
+                    </tags>
+                    <title value="deepseek coder v2:latest" />
+                    <usage>
+                      <list>
+                        <option value="chat" />
+                        <option value="edit" />
+                      </list>
+                    </usage>
+                  </llm>
+                </llm>
+              </chat>
+              <chat>
+                <internalId value="d3255416-714a-474f-a844-5fa98b1bb504" />
+                <llm>
+                  <llm>
+                    <model value="ollama/deepseek-coder-v2:latest" />
+                    <provider value="Ollama" />
+                    <tags>
+                      <list>
+                        <option value="local" />
+                        <option value="ollama" />
+                        <option value="experimental" />
+                      </list>
+                    </tags>
+                    <title value="deepseek coder v2:latest" />
+                    <usage>
+                      <list>
+                        <option value="chat" />
+                        <option value="edit" />
+                      </list>
+                    </usage>
+                  </llm>
+                </llm>
+              </chat>
             </list>
           </chats>
+          <defaultLlm>
+            <llm>
+              <model value="ollama/deepseek-coder-v2:latest" />
+              <provider value="Ollama" />
+              <tags>
+                <list>
+                  <option value="local" />
+                  <option value="ollama" />
+                  <option value="experimental" />
+                </list>
+              </tags>
+              <title value="deepseek coder v2:latest" />
+              <usage>
+                <list>
+                  <option value="chat" />
+                  <option value="edit" />
+                </list>
+              </usage>
+            </llm>
+          </defaultLlm>
         </AccountData>
       </list>
     </accountData>

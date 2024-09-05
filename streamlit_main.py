@@ -4,7 +4,7 @@ import pandas as pd
 import html
 import re
 
-# Custom CSS for better styling (unchanged)
+# Custom CSS for enhanced styling
 st.markdown("""
 <style>
     .section-divider {
@@ -14,30 +14,112 @@ st.markdown("""
     }
     .section-header {
         font-weight: bold;
-        font-size: 18px;
+        font-size: 20px;
         margin-bottom: 10px;
-        color: #4A4A4A;
+        color: #3A3A3A;
+        padding-left: 10px;
+        border-left: 5px solid #2ecc71;
     }
     .prompt-content {
-        background-color: #f0f2f6;
-        border-radius: 5px;
-        padding: 10px;
-        margin-bottom: 10px;
+        background-color: #f7f9fc;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
     }
     .expander-title {
         font-size: 24px;
         font-weight: bold;
-        margin-bottom: 20px;
+        color: #2ecc71;
+        margin-bottom: 10px;
+        text-align: center;
     }
-    .bold {
+    .category-header {
+        font-size: 26px;
         font-weight: bold;
+        color: #2ecc71;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+        padding: 10px;
+        border: 2px solid #2ecc71;
+        border-radius: 8px;
+        background-color: #e8f5e9;
+        box-shadow: 0px 4px 10px rgba(46, 204, 113, 0.2);
+    }
+    .subcategory-tab {
+        font-size: 22px;
+        font-weight: bold;
+        color: #3498db;
+        margin-top: 15px;
+        margin-bottom: 15px;
+        padding: 10px;
+        border: 2px solid #3498db;
+        border-radius: 8px;
+        background-color: #eaf2fa;
+        text-align: center;
+        box-shadow: 0px 4px 8px rgba(52, 152, 219, 0.2);
+    }
+    .prompt-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #2c3e50;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        padding: 8px;
+        border-radius: 5px;
+        background-color: #ecf0f1;
+        text-align: left;
+    }
+    .stTabs > div[data-baseweb="tab"] > button {
+        background-color: #2ecc71 !important;
+        color: white !important;
+        border: none;
+        border-radius: 8px !important;
+        padding: 10px 15px !important;
+        margin: 5px !important;
+        font-weight: bold !important;
+        box-shadow: 0px 2px 5px rgba(46, 204, 113, 0.5) !important;
+        transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+    .stTabs > div[data-baseweb="tab"]:hover > button {
+        background-color: #27ae60 !important;
+        transform: translateY(-2px) !important;
+    }
+    .stTabs > div[data-baseweb="tab"][aria-selected="true"] > button {
+        background-color: #1abc9c !important;
+        color: #fff !important;
+    }
+    /* Vylepšení vzhledu tlačítek pro kategorie a podkategorie */
+    .stTabs button {
+        border: none;
+        background-color: #e0e0e0;
+        color: #333;
+        font-weight: bold;
+        border-radius: 6px;
+        padding: 10px 15px;
+        margin: 0 5px;
+        transition: all 0.3s ease;
+    }
+    .stTabs button:hover {
+        background-color: #3498db;
+        color: white;
+        box-shadow: 0px 4px 8px rgba(52, 152, 219, 0.2);
+    }
+    .stTabs button:focus {
+        outline: none;
+        background-color: #1abc9c;
+        color: white;
+    }
+    .stTabs button:active {
+        transform: translateY(2px);
     }
 </style>
 """, unsafe_allow_html=True)
 
 st.title('Prompt Box - ukázka promptů!')
 
-# Database connection and query execution (unchanged)
+# Připojení k databázi a vykonání dotazu
 db_config = st.secrets["mysql"]
 conn = pymysql.connect(
     host=db_config["host"],
@@ -69,7 +151,7 @@ query = '''
 df = pd.read_sql(query, conn)
 conn.close()
 
-# Helper function (unchanged)
+# Pomocná funkce pro dekódování textu
 def decode_text(text):
     if not isinstance(text, str):
         return text
@@ -79,60 +161,72 @@ def decode_text(text):
     text = text.replace('\\', '')
     return text
 
-# Display the data with improved styling and reordered sections
-for row in df.itertuples():
-    with st.expander(f"**{decode_text(row.prompt_name)}**"):
-        st.markdown(f"<div class='expander-title'>{decode_text(row.prompt_name)}</div>", unsafe_allow_html=True)
+# Seznam unikátních kategorií
+categories = df['category_name'].unique().tolist()
 
-        st.markdown(f"<div class='section-header'>Prompt Version</div>", unsafe_allow_html=True)
-        st.write(row.prompt_version)
+# Vytvoření záložek pro každou kategorii
+tab_list = st.tabs(categories)
 
-        st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='section-header'>Description</div>", unsafe_allow_html=True)
-        st.markdown(decode_text(row.description), unsafe_allow_html=True)
+for i, category in enumerate(categories):
+    with tab_list[i]:
+        st.markdown(f"<div class='category-header'>{category}</div>", unsafe_allow_html=True)
+        category_df = df[df['category_name'] == category]
 
-        st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='section-header'>Prompt</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='prompt-content'>{decode_text(row.prompt)}</div>", unsafe_allow_html=True)
+        # Seznam unikátních podkategorií pro aktuální kategorii
+        subcategories = category_df['subcategories'].str.split(', ').explode().unique().tolist()  # Konverze na seznam
 
-        if row.followup_prompt:
-            st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='section-header'>Follow-up Prompts</div>", unsafe_allow_html=True)
-            followups = decode_text(row.followup_prompt).split(';;')
-            for i, followup in enumerate(followups, 1):
-                st.markdown(f"<div class='prompt-content'>{i}. {followup.strip()}</div>", unsafe_allow_html=True)
+        # Zobrazení podkategorií jako záložek
+        subcategory_tab_list = st.tabs(subcategories)
 
-        if row.instructions:
-            st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='section-header'>Instructions</div>", unsafe_allow_html=True)
-            instructions = decode_text(row.instructions).splitlines()
-            st.markdown("<ul>" + "".join(f"<li>{line}</li>" for line in instructions if line.strip()) + "</ul>", unsafe_allow_html=True)
+        for j, subcategory in enumerate(subcategories):
+            if subcategory:  # Ověření, zda podkategorie není prázdná
+                subcategory_df = category_df[category_df['subcategories'].str.contains(subcategory, na=False)]
 
-        st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='section-header'>Category</div>", unsafe_allow_html=True)
-        st.write(decode_text(row.category_name))
+                with subcategory_tab_list[j]:
+                    st.markdown(f"<div class='subcategory-tab'>{subcategory}</div>", unsafe_allow_html=True)
+                    for row in subcategory_df.itertuples():
+                        # Zobrazení jednotlivých promptů uvnitř záložek podkategorií
+                        with st.expander(f"Prompt: {decode_text(row.prompt_name)}"):
+                            st.markdown(f"<div class='prompt-title'>{decode_text(row.prompt_name)}</div>", unsafe_allow_html=True)
 
-        if row.subcategories:
-            st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='section-header'>Subcategories</div>", unsafe_allow_html=True)
-            st.write(decode_text(row.subcategories))
+                            st.markdown(f"<div class='section-header'>Verze promptu</div>", unsafe_allow_html=True)
+                            st.write(row.prompt_version)
 
-        st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='section-header'>Tags</div>", unsafe_allow_html=True)
-        st.write(decode_text(row.tags))
+                            st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+                            st.markdown(f"<div class='section-header'>Popis</div>", unsafe_allow_html=True)
+                            st.markdown(decode_text(row.description), unsafe_allow_html=True)
 
-        st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='section-header'>Price</div>", unsafe_allow_html=True)
-        st.write("Zdarma" if row.price == 0 else f"{row.price}")
+                            st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+                            st.markdown(f"<div class='section-header'>Prompt</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div class='prompt-content'>{decode_text(row.prompt)}</div>", unsafe_allow_html=True)
 
-        # Example Outputs moved to the end
-        if row.example_output:
-            st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='section-header'>Example Outputs</div>", unsafe_allow_html=True)
-            examples = decode_text(row.example_output).split(';;')
-            for i, example in enumerate(examples, 1):
-                formatted_example = example.strip().replace('\n', '<br>')
-                st.markdown(f"<div class='prompt-content'><strong>Example {i}:</strong><br>{formatted_example}</div>",
-                            unsafe_allow_html=True)
-                if i < len(examples):
-                    st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
+                            if row.followup_prompt:
+                                st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+                                st.markdown(f"<div class='section-header'>Následující prompty</div>", unsafe_allow_html=True)
+                                followups = decode_text(row.followup_prompt).split(';;')
+                                for i, followup in enumerate(followups, 1):
+                                    st.markdown(f"<div class='prompt-content'>{i}. {followup.strip()}</div>", unsafe_allow_html=True)
+
+                            if row.instructions:
+                                st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+                                st.markdown(f"<div class='section-header'>Instrukce</div>", unsafe_allow_html=True)
+                                instructions = decode_text(row.instructions).splitlines()
+                                st.markdown("<ul>" + "".join(f"<li>{line}</li>" for line in instructions if line.strip()) + "</ul>", unsafe_allow_html=True)
+
+                            st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+                            st.markdown(f"<div class='section-header'>Tagy</div>", unsafe_allow_html=True)
+                            st.write(decode_text(row.tags))
+
+                            st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+                            st.markdown(f"<div class='section-header'>Cena</div>", unsafe_allow_html=True)
+                            st.write("Zdarma" if row.price == 0 else f"{row.price}")
+
+                            if row.example_output:
+                                st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+                                st.markdown(f"<div class='section-header'>Ukázky výstupů</div>", unsafe_allow_html=True)
+                                examples = decode_text(row.example_output).split(';;')
+                                for i, example in enumerate(examples, 1):
+                                    formatted_example = example.strip().replace('\n', '<br>')
+                                    st.markdown(f"<div class='prompt-content'><strong>Ukázka {i}:</strong><br>{formatted_example}</div>", unsafe_allow_html=True)
+                                    if i < len(examples):
+                                        st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
